@@ -81,8 +81,8 @@ public class index extends HttpServlet {
     
     private AmazonEC2         ec2;
     private AmazonDynamoDB dynamo;
-    private String pDate;
-    private String pKeystring;
+    private String pDate = "";
+    private String pKeystring = "";
     private String pMessage = "";
     
     
@@ -156,7 +156,16 @@ public class index extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		//String date = request.getParameter("date");
+		String pKeystring = request.getParameter("key");
+		//request.setAttribute("date", date);
+		String pDate = request.getParameter("date");
 		
+		if((pKeystring != null && !pKeystring.isEmpty()) || (pDate != null && !pDate.isEmpty()))
+		{
+			request.getRequestDispatcher("index.jsp").forward(request,response);
+			//pKeystring = ""; 
+			//pDate = ""; 
+		}
 		AWSCredentialsProvider credentials = new ClasspathPropertiesFileCredentialsProvider();
 		
 		
@@ -243,10 +252,6 @@ public class index extends HttpServlet {
 		
 		
 		
-		
-		pKeystring = request.getParameter("key");
-		//request.setAttribute("date", date);
-		pDate = request.getParameter("date");
 		
 		//final AsyncContext ac = request.startAsync();
 		//ongoingRequests.add(ac);

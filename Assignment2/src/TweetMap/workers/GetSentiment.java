@@ -25,6 +25,9 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
+import com.amazonaws.services.dynamodbv2.model.ReturnValue;
+import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
+import com.amazonaws.services.dynamodbv2.model.UpdateItemResult;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
@@ -92,7 +95,18 @@ public class GetSentiment implements Runnable{
 		try {
 			doc = alchemy.TextGetTextSentiment(MessageText);
 			String score = getStringFromDocument(doc);
-	    	Tweet.replace("Score", new AttributeValue().withS(score));
+			
+			Map<String, AttributeValue> expressionAttributeValues = new HashMap<String, AttributeValue>();
+    		expressionAttributeValues.put(":val1", new AttributeValue().withS(score)); 
+    		
+			UpdateItemRequest updateItemRequest = new UpdateItemRequest()
+            .withTableName("Tweet2")
+            .withKey(key)
+            .withUpdateExpression("set Score = :val1")
+            .withExpressionAttributeValues(expressionAttributeValues)
+            .withReturnValues(ReturnValue.ALL_NEW);
+
+        UpdateItemResult result = client.updateItem(updateItemRequest);
 			System.out.println("score: " +  score);
 			
 			String topicArn = "arn:aws:sns:us-east-1:505059448688:MyNewTopic";

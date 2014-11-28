@@ -74,7 +74,7 @@
 	//expression.put("KeyString", new AttributeValue().withS("NFL"));
 	//key.put("KeyString", new AttributeValue().withS("Hahaha"));
 	ScanRequest scanRequest = new ScanRequest()
-	.withTableName("Tweet2").withAttributesToGet(new String []{"Date","Longtitude","Latitude","Score"}).withScanFilter(scanCondition);
+	.withTableName("Tweet2").withAttributesToGet(new String []{"Date","Latitude","Longtitude","Score"}).withScanFilter(scanCondition);
 	//.withFilterExpression("KeyString equal NFL");
 	
 	ScanResult result = dynamo.scan(scanRequest);
@@ -83,31 +83,6 @@
 	if(item.values().size() == 4)
 	arr.add(item.values().toString().replace("'", "").replace("{S: ", "'").replace(",}", "'"));
 	}
-
-	//ArrayList<String> arr = ((ArrayList<String>)request.getAttribute("arr"));
-	//String arr = (String)request.getAttribute("arr");
-	//Condition keyCondition = new Condition().withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue().withS(pKey));
-	//Condition dateCondition = new Condition().withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue().withS(pDate));
-	//Map<String,Condition> scanCondition = new HashMap<String,Condition>();
-	//if(pKey.length() != 0)
-		//scanCondition.put("KeyString", keyCondition);
-	//if(pDate.length() != 0)
-		//scanCondition.put("Date", dateCondition);
-	//ArrayList<String> arr = new ArrayList<String>();
-	//arr.add("40.7127837,-74.0059413");
-	//HashMap<String, AttributeValue> expression = new HashMap<String, AttributeValue>();
-	//expression.put("KeyString", new AttributeValue().withS("NFL"));
-	//key.put("KeyString", new AttributeValue().withS("Hahaha"));
-	//ScanRequest scanRequest = new ScanRequest()
-	//.withTableName("TweetInfo").withAttributesToGet(new String []{"KeyString","Date","Longtitude","Latitude"}).withScanFilter(scanCondition);
-	//.withFilterExpression("KeyString equal NFL");
-	
-	//ScanResult result = dynamo.scan(scanRequest);
-	//for(Map<String, AttributeValue> item : result.getItems())
-	//{
-		//if(item.values().size() == 4)
-		//arr.add(item.values().toString().replace("'", "").replace("{S: ", "'").replace(",}", "'"));
-	//}
 %>
 
 <!DOCTYPE html>
@@ -120,34 +95,78 @@
     <SCRIPT LANGUAGE=javascript src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCbq08SqMSglrKcKeJWfc1ySZ6gyI2P6vc"></SCRIPT>
     <script src="//code.jquery.com/jquery-1.10.2.js"></script>
     <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=visualization"></script>
     <script type="text/javascript" >
-    	var locations = new Array(); 
+    	//var locations = new Array(); 
     	var mapOptions;
     	var map;
     	var i = 1;
+        var positive = 'http://s18.postimg.org/8lskwd11h/positive_small.png';
+        var neutraul = 'http://s29.postimg.org/z714fof5f/neutrual_small.png';
+        var negative = 'http://s28.postimg.org/ktomb2gh5/negative_small.png';
+        //var positive = 'images/positive_small.png';
+        //var neutraul = 'images/neutrual_small.png';
+        //var negative = 'images/negative_small.png';
     	var locations = <%= arr %>
+    	var heatData = [];
+    	var heatmap;
 		function initialize() {
 				        mapOptions = {
-				          center: { lat: 40.7127837, lng: -74.0059413},
-				          zoom: 8
+				          center: { lat: 40.46366700000001, lng: -3.74922},
+				          zoom: 2
 				        };
 				        map = new google.maps.Map(document.getElementById('map-canvas'),
 				            mapOptions);
-				        
-				        /*for (var i = 0; i < locations.length; i++) {
-				        	var a = locations[i][0];
+				        for (var i = 0; i < locations.length; i++) {
+				        	var score = locations[i][0];
+				        	var image;
+				        	if(Number(score) == 0)
+				        		image = neutraul;
+				        	else if(Number(score) > 0)
+				        		image = positive;
+				        	else
+				        		image = negative;
+				        	heatData.push(new google.maps.LatLng(locations[i][2], locations[i][1]));
 				        	var marker = new google.maps.Marker({
-				        		position: new google.maps.LatLng(locations[i][0], locations[i][1]),
-				        		map: map
+				        		position: new google.maps.LatLng(locations[i][2], locations[i][1]),
+				        		map: map,
+				        		icon: image
 				        	});
-				        }*/
+				        }/**/
+				        
+				        var pointArray = new google.maps.MVCArray(heatData);
+
+				        heatmap = new google.maps.visualization.HeatmapLayer({
+				          data: pointArray
+				        });
+
+				        heatmap.setMap(map);
+				        heatmap.set('radius', heatmap.get('radius') ? null : 50);
 					}
+		
+		
+		
 		google.maps.event.addDomListener(window, 'load', initialize);
+		
+		
+		
+		
+		
 		function add(){
-			var marker = new google.maps.Marker({
-	    		position: new google.maps.LatLng(40.7127837, -74.0059413)
-	    	});
-			marker.setMap(map);	
+			if(heatmap.getMap())
+				heatmap.setMap(null);
+			else
+			{
+				var pointArray = new google.maps.MVCArray(heatData);
+	
+		        heatmap = new google.maps.visualization.HeatmapLayer({
+		          data: pointArray
+		        });
+		        heatmap.setMap(map);
+		        heatmap.set('radius', heatmap.get('radius') ? null : 50);/**/
+			}
+	        
+			//heatmap.setMap(heatmap.getMap() ? null : map);
 		}
 		
 		$(function() {
@@ -157,13 +176,24 @@
 		        var eventSource = new EventSource("index");
 		         
 		        eventSource.onmessage = function(event) {
-		        	document.getElementById('foo').innerHTML = event.data + ' ' + i + "</br>";
+		        	document.getElementById('foo').innerHTML = event.data + '  count: ' + i + "</br>";
 		        	i = i+1;
 		        	var str = event.data.split(",");
 		        	var lat = Number(str[0]);
 		        	var lng = Number(str[1]);
+		        	var s = Number(str[2]);
+		        	heatData.push(new google.maps.LatLng(lat, lng));
+		        	var image;
+		        	if(s == 0)
+		        		image = neutraul;
+		        	else if(s > 0)
+		        		image = positive;
+		        	else
+		        		image = negative;
 		        	var marker = new google.maps.Marker({
-			    		position: new google.maps.LatLng(Number(str[0]), Number(str[1]))
+		        		animation: google.maps.Animation.DROP,
+						position: new google.maps.LatLng(Number(str[0]), Number(str[1])),
+		        		icon: image
 			    	});
 					marker.setMap(map);	
 		        };
@@ -201,11 +231,20 @@
 	<style>fieldset {border: 0;}label {display: block;margin: 30px 0 0 0;}select {width: 200px;}.overflow {height: 200px;}</style>
 </head>
 <body>
-Time: <span id="foo"></span>
-array: <button onclick = 'add()'>add</button>
+<table>
+<tr>
+	<td>
+		New point: <span id="foo"></span>
+	</td>
+</tr>
+<tr>
+	<td>	
+		<button onclick = 'add()'>Toggle HeatMap</button>
+	</td>
+</tr>
+</table>
 <table>
 	<tr>
-		<button action="index" method="post">post</button>
 		<td>
 			<form action="index" method="post">
 			<fieldset><select name="key" id="key"><option selected="selected"> </option><option>NFL</option><option>Baseball</option><option>New Arrivals</option><option>Coffee</option><option>Believe</option></select></fieldset>
