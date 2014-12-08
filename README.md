@@ -17,5 +17,7 @@ The following jars are required to run the project
   twitter4j-core-4.0.2.jar
   
   twitter4j-stream-4.0.2.jar
+  
+  Video link : http://youtu.be/cS69I7IT26U
 
 Assignment2
